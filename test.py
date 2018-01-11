@@ -2,12 +2,13 @@
 """
 Test File
 """
-import tensorflow as tf
-from game_lib import GameState
 
-gs = GameState(123)
-print(gs.real_actions)
-x_t = gs.preprocess_image()
-print(x_t)
-print(x_t.shape)
-print(tf.reshape(x_t,[-1,84,84,1]))
+from ale import ALEState
+from constants import INITIAL_SEED
+
+game_atari = ALEState(INITIAL_SEED)
+print(game_atari.reward)
+print(game_atari.s_t)
+
+game_atari.process_to_next_image(0)
+print(game_atari.s_t)

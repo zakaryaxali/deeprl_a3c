@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 
+# ARCADE LEARNING ENVIRONMENT
 ROM = "breakout.bin"
-
-IMAGE_HEIGHT = 210
+INITIAL_SEED = 123
+SKIPED_FRAMES = 4
+IMAGE_HEIGHT = 210 
 IMAGE_WIDTH = 160
+
+
+# A3C Algorithm
+T_MAX = 1e7
+NBR_STEPS = 20
