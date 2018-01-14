@@ -3,6 +3,7 @@
 from ale import ALEGame
 from network import NNetwork
 import numpy as np
+from constants import FC_PI_POS, FC_LSTM_POS
 
 class ActorA3C():
     """
@@ -11,7 +12,7 @@ class ActorA3C():
     """    
     def __init__(self, game_name, rand_seed, gamma, thread_index=0):
         self.thread_index = thread_index
-        self.game_state = ALEGame(rand_seed * thread_index)
+        self.game_state = ALEGame(rand_seed * thread_index, game_name)
         self.gamma = gamma
         self.local_network = NNetwork()
         self.T = 0 #need to change this maybe
@@ -20,8 +21,7 @@ class ActorA3C():
         """
         A3C - pseudocode for each actor-learner thread
         The actor plays the Atari Game
-        """
-                
+        """        
         while self.T<T_MAX:
             t = 0
             # todo : Reset gradients : d_theta
@@ -32,7 +32,8 @@ class ActorA3C():
             
             while t<t_max or self.game_state.is_game_over==False:
                 # todo : Perform a_t according to policy pi
-                probas_pi = self.local_network.get_pi(s_t)
+                lstm_outpus = self.local_network.get_lstm(s_t, FC_LSTM_POS)
+                probas_pi = self.local_network.get_pi(lstm_outpus, FC_PI_POS)
                 action = self.get_action_from_pi(probas_pi) # Find best action
                 self.game_state.process_to_next_image(action)
                 

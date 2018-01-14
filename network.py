@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from tensorflow import nn #change tensorflow => not to use run()
+from tools import relu
+import numpy as np
+from tools import softmax
+
 class NNetwork():
     """
     Deep Neural Network that takes in 
@@ -14,18 +19,34 @@ class NNetwork():
         self.value = 0
         self.layers = {}
     
+    
     def add_layer(self, layer, position):
         self.layers[position] = layer
     
-    def get_pi(self):
+    
+    def get_lstm(self, s_t, lstm_pos):
         """
-        Returns the probabilities of selecting each action
+        Returns lstm values
         """
-        raise NotImplementedError()
+        out_data = s_t        
+        for layer_pos in range(1, lstm_pos+1):
+            layer = self.layers[layer_pos]            
+            out_data = relu(layer.forward(out_data))
+        return out_data
         
-    def get_value(self):
+        
+    def get_value(self, lstm_outputs, pos_layer):
         """
         Returns the value of the current state
         """
-        raise NotImplementedError()
+        layer = self.layers[pos_layer]
+        return np.dot(layer.weights.T, lstm_outputs) + layer.bias
+    
+    
+    def get_pi(self, lstm_outputs, pos_layer):
+        """
+        Returns the probabilities of selecting each action
+        """
+        layer = self.layers[pos_layer]
+        return softmax(np.dot(layer.weights.T, lstm_outputs) + layer.bias)
         
