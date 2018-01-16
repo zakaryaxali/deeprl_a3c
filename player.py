@@ -65,4 +65,5 @@ class ActorA3C():
         Choose an action considering the probabilities of selecting one
         in particular
         """
-        return np.random.choice(range(len(prob_policies)), p=prob_policies)
+        return np.random.choice(range(len(prob_policies)), 
+                                p=prob_policies.reshape(len(prob_policies)))

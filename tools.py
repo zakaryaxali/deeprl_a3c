@@ -38,6 +38,7 @@ def relu(in_data):
         ret = in_data.copy()
         ret[ret < 0] = 0
         return ret
+
     
 def get_height_after_conv(init_height, filter_size, stride):
     return int(((init_height-filter_size)/stride+1))

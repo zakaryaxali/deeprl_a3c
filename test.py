@@ -22,7 +22,8 @@ lay_conv2 = ConvLayer(input_channel=constants.CONV1_FILTERS,
 
 lay_fc3 = FCLayer(constants.FC_LSTM_UNITS, constants.FC_LSTM_OUTPUTS)
 
-lay_fc4 = FCLayer(constants.FC_PI_UNITS, constants.FC_PI_OUTPUTS)
+lay_fc4 = FCLayer(constants.FC_PI_UNITS, 
+                  len(player_thread.game_state.real_actions))
 
 lay_fc5 = FCLayer(constants.FC_V_UNITS, constants.FC_V_OUTPUTS)
 
