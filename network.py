@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from tensorflow import nn #change tensorflow => not to use run()
-from tools import relu
+
+
 import numpy as np
-from tools import softmax
 
 class NNetwork():
     """
@@ -31,7 +30,7 @@ class NNetwork():
         out_data = s_t        
         for layer_pos in range(1, lstm_pos+1):
             layer = self.layers[layer_pos]            
-            out_data = relu(layer.forward(out_data))
+            out_data = layer.forward(out_data)
         return out_data
         
         
@@ -48,5 +47,18 @@ class NNetwork():
         Returns the probabilities of selecting each action
         """
         layer = self.layers[pos_layer]
-        return softmax(np.dot(layer.weights.T, lstm_outputs) + layer.bias)
-        
+        # ADD SOFTMAX LAYER
+        return np.dot(layer.weights.T, lstm_outputs) + layer.bias
+    
+    
+    
+    def get_intermediate_values(self, pos_layer):
+        """
+        Returns values at each neurons 
+        of layers which are useful for the backpropagation
+        """
+        intermediate_values = []
+        for layer_pos in range(1, pos_layer+1):
+            layer = self.layers[layer_pos]            
+            intermediate_values.append(layer.in_val)
+        return intermediate_values 

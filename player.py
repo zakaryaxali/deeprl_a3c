@@ -28,19 +28,33 @@ class ActorA3C():
             # todo : Synchronize thread-specific parameters 
             # done : Get state s_t
             s_t = self.game_state.s_t
+            states = []
+            actions = []
             rewards = []
+            values = []
+            intermediate_values = []
             
             while t<t_max or self.game_state.is_game_over==False:
                 # todo : Perform a_t according to policy pi
                 lstm_outpus = self.local_network.get_lstm(s_t, FC_LSTM_POS)
                 probas_pi = self.local_network.get_pi(lstm_outpus, FC_PI_POS)
                 action = self.get_action_from_pi(probas_pi) # Find best action
+                
                 self.game_state.process_to_next_image(action)
                 
                 # done : Receive reward r_t and new state s_t1
                 rewards.append(self.game_state.reward)
+                states.append(s_t)
+                actions.append(action)
+                values.append(self.local_network.get_value(s_t))
+                
                 self.game_state.update()
                 s_t = self.game_state.s_t
+                
+                #Retrieve values NNet for next gradient descent
+                intermediate_values.append(
+                        self.local_network.get_intermediate_values())
+                
                 t += 1
                 self.T += 1 
       
@@ -53,7 +67,9 @@ class ActorA3C():
             i = t-1
             while i >= 0:                
                 R = rewards[i] + self.gamma * R
-                # todo : compute and accmulate gradients
+                
+                # todo : compute and accmulate gradients    
+            
                 
                 i -= 1
                 

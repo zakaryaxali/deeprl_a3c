@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from tools import conv2, get_height_after_conv
+from tools import conv2, get_height_after_conv, rot180, padding
 #from torch import nn
 #class torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True)[source]
 
@@ -12,8 +12,11 @@ class ConvLayer:
         self.bias = np.zeros((output_channel))
         self.stride = stride
         
-    def forward(self, input_data):
+    def update_val(self, val):
+        self.in_val = val
         
+    def forward(self, input_data):
+        self.in_val = input_data
         in_row, in_col, in_channel  = input_data.shape
         out_channel, kernel_size = self.weights.shape[1], self.weights.shape[2]
         out_row = get_height_after_conv(in_row, kernel_size, self.stride)
@@ -31,20 +34,88 @@ class ConvLayer:
         #                 strides = [1, self.stride, self.stride, 1], 
         #                 padding='VALID' ) + self.bias
     
+    def backward(self, residuals):
+        in_channel, out_channel, kernel_size = self.weights.shape
+        dw = np.zeros_like(self.weights)
+        
+        for i in range(in_channel):
+            for o in range(out_channel):
+                dw[i, o] += conv2(self.in_val, residuals[o])
+        
+        self.db += residuals.sum(axis=3).sum(axis=2).sum(axis=0) 
+        self.dw += dw
+        
+        # gradient_x
+        gradient_x = np.zeros_like(self.in_val)
+        
+        for i in range(in_channel):
+            for o in range(out_channel):
+                gradient_x[i] += conv2(padding(residuals, kernel_size - 1), 
+                          rot180(self.weights[i, o]))
+        # IMPORtANT !!!
+        # gradient_x /= self.batch_size
+        # update
+        
+        return gradient_x
+        
         
 class FCLayer:
     def __init__(self, input_num, output_num):
         self.weights = np.random.randn(input_num, output_num)
         self.bias = np.zeros((output_num, 1))
-        
+    
+    def update_val(self, val):
+        self.in_val = val
         
     def forward(self, input_data):
+        self.in_val = input_data
         return np.dot(self.weights.T, input_data) + self.bias
-
+    
+    def backward(self, loss):
+        self.dw += np.dot(self.in_val, loss.T)
+        self.db += np.sum(loss) 
+        residual_x = np.dot(self.weights, loss)
+        return residual_x
+    
 
 class FlattenLayer:
     def __init__(self):
         pass
     def forward(self, in_data):
         self.r, self.c, self.in_channel  = in_data.shape
-        return in_data.reshape( self.in_channel * self.r * self.c, 1)
+        return in_data.reshape(self.in_channel * self.r * self.c, 1)
+    def backward(self, residual):
+        return residual.reshape(self.in_channel, self.r, self.c)
+
+
+class SoftmaxLayer:
+    def __init__(self):
+        pass
+    
+    def forward(x):
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum()
+
+    def backward(output, residuals):
+        return (output-residuals)
+
+
+class ReLULayer:
+    def __init__(self):
+        pass
+
+    def forward(self, in_data):
+        self.top_val = in_data
+        ret = in_data.copy()
+        ret[ret < 0] = 0
+        return ret
+    
+    def backward(self, residual):
+        gradient_x = residual.copy()
+        gradient_x[self.top_val < 0] = 0
+        return gradient_x
+
+def relu(in_data):
+        ret = in_data.copy()
+        ret[ret < 0] = 0
+        return ret
