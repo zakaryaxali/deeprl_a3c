@@ -7,10 +7,13 @@ from tools import conv2, get_height_after_conv, rot180, padding
 
 class ConvLayer:
     def __init__(self, input_channel, output_channel, kernel_size, stride):
+        self.in_val = 0
         self.weights = np.random.randn(input_channel, output_channel, 
                                        kernel_size, kernel_size)
         self.bias = np.zeros((output_channel))
         self.stride = stride
+        self.db = np.zeros_like(self.bias)
+        self.dw = np.zeros_like(self.weights)   
         
     def update_val(self, val):
         self.in_val = val
@@ -35,15 +38,15 @@ class ConvLayer:
         #                 padding='VALID' ) + self.bias
     
     def backward(self, residuals):
-        in_channel, out_channel, kernel_size = self.weights.shape
-        dw = np.zeros_like(self.weights)
+        in_channel, out_channel, kernel_size, a = self.weights.shape
+        dw = np.zeros_like(self.weights)        
         
         for i in range(in_channel):
             for o in range(out_channel):
                 dw[i, o] += conv2(self.in_val, residuals[o])
         
-        self.db += residuals.sum(axis=3).sum(axis=2).sum(axis=0) 
-        self.dw += dw
+        self.db = residuals.sum(axis=3).sum(axis=2).sum(axis=0) 
+        self.dw = dw
         
         # gradient_x
         gradient_x = np.zeros_like(self.in_val)
@@ -57,12 +60,19 @@ class ConvLayer:
         # update
         
         return gradient_x
+    
+    def get_diff_weights_bias(self):
+        return self.dw, self.db
         
         
 class FCLayer:
     def __init__(self, input_num, output_num):
+        self.in_val = 0
         self.weights = np.random.randn(input_num, output_num)
         self.bias = np.zeros((output_num, 1))
+        self.db = np.zeros_like(self.bias)
+        self.dw = np.zeros_like(self.weights)       
+        
     
     def update_val(self, val):
         self.in_val = val
@@ -72,50 +82,72 @@ class FCLayer:
         return np.dot(self.weights.T, input_data) + self.bias
     
     def backward(self, loss):
-        self.dw += np.dot(self.in_val, loss.T)
-        self.db += np.sum(loss) 
+        self.dw = np.dot(self.in_val, loss.T)
+        self.db = np.sum(loss) 
         residual_x = np.dot(self.weights, loss)
         return residual_x
     
+    def get_diff_weights_bias(self):
+        return self.dw, self.db
 
 class FlattenLayer:
     def __init__(self):
+        self.in_val = 0
         pass
+    
+    def update_val(self, val):
+        self.in_val = val
+        
     def forward(self, in_data):
         self.r, self.c, self.in_channel  = in_data.shape
         return in_data.reshape(self.in_channel * self.r * self.c, 1)
+
     def backward(self, residual):
-        return residual.reshape(self.in_channel, self.r, self.c)
+        # return residual.reshape(self.in_channel, self.r, self.c)
+        return residual.reshape(self.r, self.c, self.in_channel)
+    
+    def get_diff_weights_bias(self):
+        return None, None
 
 
 class SoftmaxLayer:
     def __init__(self):
+        self.in_val = 0
         pass
     
-    def forward(x):
-        e_x = np.exp(x - np.max(x))
-        return e_x / e_x.sum()
+    def update_val(self, val):
+        self.in_val = val
+    
+    def forward(self, x):        
+        e_x = np.exp(x)
+        temp = e_x / sum(e_x)
+        self.in_val = temp
+        return temp
 
-    def backward(output, residuals):
-        return (output-residuals)
+    def backward(self, residuals):
+        return (self.in_val-residuals)
 
+    def get_diff_weights_bias(self):
+        pass
 
 class ReLULayer:
     def __init__(self):
+        self.in_val = 0
         pass
-
+    
+    def update_val(self, val):
+        self.in_val = val
+    
     def forward(self, in_data):
-        self.top_val = in_data
+        self.in_val = in_data
         ret = in_data.copy()
         ret[ret < 0] = 0
         return ret
     
     def backward(self, residual):
         gradient_x = residual.copy()
-        gradient_x[self.top_val < 0] = 0
+        gradient_x[self.in_val < 0] = 0
         return gradient_x
-
-def relu(in_data):
-        ret = in_data.copy()
-        ret[ret < 0] = 0
-        return ret
+    
+    def get_diff_weights_bias(self):
+        pass

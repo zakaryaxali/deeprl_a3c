@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
-
 import numpy as np
 
 class NNetwork():
@@ -39,26 +37,85 @@ class NNetwork():
         Returns the value of the current state
         """
         layer = self.layers[pos_layer]
-        return np.dot(layer.weights.T, lstm_outputs) + layer.bias
+        return layer.forward(lstm_outputs)
     
     
-    def get_pi(self, lstm_outputs, pos_layer):
+    def get_pi(self, lstm_outputs, pos_layer1, pos_layer2):
         """
         Returns the probabilities of selecting each action
         """
-        layer = self.layers[pos_layer]
-        # ADD SOFTMAX LAYER
-        return np.dot(layer.weights.T, lstm_outputs) + layer.bias
+        layer = self.layers[pos_layer1]
+        temp = layer.forward(lstm_outputs)
+        layer = self.layers[pos_layer2]
+        pi = layer.forward(temp)        
+        return pi
     
     
-    
-    def get_intermediate_values(self, pos_layer):
+    def get_intermediate_values(self):
         """
         Returns values at each neurons 
         of layers which are useful for the backpropagation
         """
         intermediate_values = []
-        for layer_pos in range(1, pos_layer+1):
-            layer = self.layers[layer_pos]            
+        for layer_pos in range(1, len(self.layers) + 1):
+            layer = self.layers[layer_pos]               
             intermediate_values.append(layer.in_val)
         return intermediate_values 
+
+    
+    def get_loss_pi(self, R, V, pi):
+        """
+        Returns the loss for the policy
+        """
+        loss_pi = np.log(pi)*(R-V)
+        return loss_pi
+    
+    
+    def get_loss_value(self, R, V):
+        """
+        Returns the loss for the value
+        """
+        loss_value = (R-V)**2
+        return loss_value
+    
+    
+    def backpropag_pi(self, loss, values):
+        """
+        Makes the backpropagation on all the convolutional network 
+        using the probability final layer
+        Returns the weigts difference
+        """
+        out_data = loss        
+        layer_pos = len(self.layers) - 1
+        
+        while layer_pos >=1:
+            layer = self.layers[layer_pos]            
+            layer.update_val(values[layer_pos-1])
+            out_data = layer.backward(out_data)
+            print(layer_pos)
+            layer_pos -= 1
+        return self.get_all_diff_weights_bias()
+    
+    def get_all_diff_weights_bias(self):
+        dw = []
+        db = []
+        layer_pos = len(self.layers) - 1
+        
+        while layer_pos >=1:
+            layer = self.layers[layer_pos]            
+            curt_dw_db, curt_db = layer.get_diff_weights_bias()
+            if not curt_dw_db is None:
+                dw.append(curt_dw_db[0])
+                db.append(curt_dw_db[1])
+                layer.clear_weights_bias()
+                
+            layer_pos -= 1
+            
+        return dw, db 
+    
+    def backpropag_value():
+        """
+        Makes the backpropagation on the last value layer
+        Returns the weigts difference of that layer
+        """
+        pass

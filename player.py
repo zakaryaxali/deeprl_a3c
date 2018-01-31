@@ -3,7 +3,7 @@
 from ale import ALEGame
 from network import NNetwork
 import numpy as np
-from constants import FC_PI_POS, FC_LSTM_POS
+from constants import FC_PI_POS, FC_LSTM_POS, SM_POS, FC_V_POS
 
 class ActorA3C():
     """
@@ -29,24 +29,29 @@ class ActorA3C():
             # done : Get state s_t
             s_t = self.game_state.s_t
             states = []
-            actions = []
+            actions = [] # seems unused
+            pis = []
             rewards = []
             values = []
             intermediate_values = []
             
-            while t<t_max or self.game_state.is_game_over==False:
+            while t<t_max and self.game_state.is_game_over==False:
                 # todo : Perform a_t according to policy pi
                 lstm_outpus = self.local_network.get_lstm(s_t, FC_LSTM_POS)
-                probas_pi = self.local_network.get_pi(lstm_outpus, FC_PI_POS)
+                probas_pi = self.local_network.get_pi(lstm_outpus
+                                                      , FC_PI_POS
+                                                      , SM_POS)
                 action = self.get_action_from_pi(probas_pi) # Find best action
                 
                 self.game_state.process_to_next_image(action)
                 
                 # done : Receive reward r_t and new state s_t1
-                rewards.append(self.game_state.reward)
+                rewards.append(self.game_state.reward)                
                 states.append(s_t)
                 actions.append(action)
-                values.append(self.local_network.get_value(s_t))
+                pis.append(probas_pi[action])
+                values.append(self.local_network.get_value(lstm_outpus
+                                                           , FC_V_POS))
                 
                 self.game_state.update()
                 s_t = self.game_state.s_t
@@ -62,15 +67,22 @@ class ActorA3C():
                 R = 0.
             else:
                 # todo : V(s_t,theta)
-                R = self.local_network.get_value(s_t)
+                lstm_outpus = self.local_network.get_lstm(s_t, FC_LSTM_POS)
+                R = self.local_network.get_value(lstm_outpus, FC_V_POS)
             
             i = t-1
+            d_theta = 0
+            d_theta_v = 0
             while i >= 0:                
                 R = rewards[i] + self.gamma * R
                 
-                # todo : compute and accmulate gradients    
-            
-                
+                # todo : compute and accmulate gradients   
+                loss_pi = self.local_network.get_loss_pi(R, values[i], pis[i])
+                loss_value = self.local_network.get_loss_value(R, values[i])
+                d_theta += self.local_network.backpropag_pi(loss_pi
+                                                            , intermediate_values[i])
+                d_theta_v += self.local_network.backpropag_value(loss_value
+                                                                 , intermediate_values[i])
                 i -= 1
                 
             # todo : Perform Asynchronous update
