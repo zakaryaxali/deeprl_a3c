@@ -16,6 +16,22 @@ def log_uniform(lo, hi, rate):
   v = log_lo * (1-rate) + log_hi * rate
   return math.exp(v)
 
+
+def inv_conv2(in_data, out_data, stride):
+    in_row, in_col = in_data.shape
+    out_row, out_col = out_data.shape
+    
+    kernel_size = get_kernel(in_row, out_row, stride)
+    ret = np.empty((kernel_size, kernel_size))
+    
+    for y in range(0, out_row):
+        for x in range(0, out_row):
+            sub = in_data[stride*y : stride*y + kernel_size, 
+                          stride*x : stride*x + kernel_size]
+            ret += np.sum(sub * out_data[y,x])
+    return ret
+
+
 # https://gist.githubusercontent.com/JiaxiangZheng/a60cc8fe1bf6e20c1a41abc98131d518/raw/3630ae57e2e6c5669868a173b763f00fc6ddfb76/CNN.py
 def conv2(X, k, stride):
     # as a demo code, here we ignore the shape check
@@ -25,13 +41,15 @@ def conv2(X, k, stride):
     ret_row = get_height_after_conv(x_row, k_row, stride)            
     ret = np.empty((ret_row, ret_row))
     
-    for y in range(ret_row):
-        for x in range(ret_row):
-            sub = X[y : y + k_row, x : x + k_col]
+    for y in range(0, ret_row):
+        for x in range(0, ret_row):
+            sub = X[stride*y : stride*y + k_row, stride*x : stride*x + k_col]
             ret[y,x] = np.sum(sub * k)
     return ret
 
-    
+def get_kernel(init_height, output_size, stride):
+    return int(init_height-(output_size-1)*stride)
+ 
 def get_height_after_conv(init_height, filter_size, stride):
     return int(((init_height-filter_size)/stride+1))
 

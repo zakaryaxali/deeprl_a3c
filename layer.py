@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from tools import conv2, get_height_after_conv, rot180, padding
+from tools import conv2, get_height_after_conv, rot180, padding, inv_conv2
 #from torch import nn
 #class torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True)[source]
 
@@ -43,9 +43,12 @@ class ConvLayer:
         
         for i in range(in_channel):
             for o in range(out_channel):
-                dw[i, o] += conv2(self.in_val, residuals[o])
+                dw[i, o] += inv_conv2(self.in_val[:,:,i], 
+                                      residuals[:,:,o], 
+                                      self.stride)
+                #dw[i, o] += conv2(self.in_val, residuals[o])
         
-        self.db = residuals.sum(axis=3).sum(axis=2).sum(axis=0) 
+        self.db = residuals.sum(axis=1).sum(axis=0)
         self.dw = dw
         
         # gradient_x
@@ -54,7 +57,8 @@ class ConvLayer:
         for i in range(in_channel):
             for o in range(out_channel):
                 gradient_x[i] += conv2(padding(residuals, kernel_size - 1), 
-                          rot180(self.weights[i, o]))
+                          rot180(self.weights[i, o]), self.stride)
+                        # rot180(self.weights[i, o]))
         # IMPORtANT !!!
         # gradient_x /= self.batch_size
         # update
