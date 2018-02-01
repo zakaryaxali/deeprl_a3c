@@ -17,7 +17,34 @@ def log_uniform(lo, hi, rate):
   return math.exp(v)
 
 
+def conv_delta(out_data, weights, stride, in_data_size):
+    """
+    Computes gradient deltas in backpropagation for convolution layer
+    Could be optimized : too much loops !!
+    Equation (20) in : 
+    http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/
+    """
+    ret = np.empty((in_data_size, in_data_size))
+    out_temp_size = int(weights.shape[0]/stride)
+    
+    for row in range(in_data_size):
+        for col in range(in_data_size):
+            row_even = row % 2
+            col_even = col % 2
+            i = math.ceil(row/stride)
+            j = math.ceil(col/stride)
+            for m in range(out_temp_size):
+                for n in range(out_temp_size):                                         
+                    if i-m >=0 and j-n >= 0 and i-m <= out_temp_size and j-n <= out_temp_size:
+                        ret[row, col] += out_data[i-m, j-n] * weights[row_even + stride * m, col_even + stride * n]
+    
+    return ret
+    
+    
 def inv_conv2(in_data, out_data, stride):
+    """
+    Computes gradient weights in backpropagation for convolution layer
+    """
     in_row, in_col = in_data.shape
     out_row, out_col = out_data.shape
     
