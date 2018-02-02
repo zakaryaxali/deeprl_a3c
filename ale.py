@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from skimage.transform import resize
+import skimage.transform
 from ale_python_interface import ALEInterface
 
 from constants import IMAGE_HEIGHT, IMAGE_WIDTH, SKIPED_FRAMES
@@ -28,7 +28,11 @@ class ALEGame(object):
         """
         self.ale.getScreenGrayscale(self.screen)                
         reshaped_screen = np.reshape(self.screen, (IMAGE_HEIGHT, IMAGE_WIDTH))
-        x_t = resize(reshaped_screen, (110, 84))        
+        #x_t = resize(reshaped_screen, (110, 84))        
+        x_t = skimage.transform.resize(reshaped_screen
+                                       , (110,84)
+                                       , preserve_range=True)
+        
         x_t = x_t[18:102,:]        
         
         if is_to_reshape:

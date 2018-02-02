@@ -5,12 +5,25 @@ from tools import conv2, get_height_after_conv, rot180, padding, inv_conv2, conv
 #from torch import nn
 #class torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True)[source]
 
+# weight initialization based on muupan's code
+# https://github.com/muupan/async-rl/blob/master/a3c_ale.py
 class ConvLayer:
     def __init__(self, input_channel, output_channel, kernel_size, stride):
         self.in_val = 0
-        self.weights = np.random.randn(input_channel, output_channel, 
-                                       kernel_size, kernel_size)
-        self.bias = np.zeros((output_channel))
+        d = 1.0 / np.sqrt(input_channel * kernel_size * kernel_size)
+        self.weights =np.random.uniform(low=-d
+                                       , high=d
+                                       , size=(input_channel
+                                               , output_channel
+                                               , kernel_size
+                                               , kernel_size))
+
+        #self.weights = np.random.randn(input_channel, output_channel, 
+        #                              kernel_size, kernel_size)
+        #self.bias = np.zeros((output_channel))
+        self.bias =np.random.uniform(low=-d
+                                     , high=d
+                                     , size= output_channel)
         self.stride = stride
         self.db = np.zeros_like(self.bias)
         self.dw = np.zeros_like(self.weights)   
@@ -76,8 +89,15 @@ class ConvLayer:
 class FCLayer:
     def __init__(self, input_num, output_num):
         self.in_val = 0
-        self.weights = np.random.randn(input_num, output_num)
-        self.bias = np.zeros((output_num, 1))
+        d = 1.0 / np.sqrt(input_num)
+        self.weights =np.random.uniform(low=-d
+                                       , high=d
+                                       , size=(input_num, output_num))
+        #self.weights = np.random.randn(input_num, output_num)        
+        self.bias =np.random.uniform(low=-d
+                                     , high=d
+                                     , size=(output_num, 1))
+        #self.bias = np.zeros((output_num, 1))
         self.db = np.zeros_like(self.bias)
         self.dw = np.zeros_like(self.weights)       
         

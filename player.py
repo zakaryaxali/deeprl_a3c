@@ -3,7 +3,7 @@
 from ale import ALEGame
 from network import NNetwork
 import numpy as np
-from constants import FC_PI_POS, FC_LSTM_POS, SM_POS, FC_V_POS
+from constants import FC_PI_POS, RELU3_POS, SM_POS, FC_V_POS
 
 class ActorA3C():
     """
@@ -37,7 +37,7 @@ class ActorA3C():
             
             while t<t_max and self.game_state.is_game_over==False:
                 # todo : Perform a_t according to policy pi
-                lstm_outpus = self.local_network.get_lstm(s_t, FC_LSTM_POS)
+                lstm_outpus = self.local_network.get_lstm(s_t, RELU3_POS)
                 probas_pi = self.local_network.get_pi(lstm_outpus
                                                       , FC_PI_POS
                                                       , SM_POS)
@@ -67,7 +67,7 @@ class ActorA3C():
                 R = 0.
             else:
                 # todo : V(s_t,theta)
-                lstm_outpus = self.local_network.get_lstm(s_t, FC_LSTM_POS)
+                lstm_outpus = self.local_network.get_lstm(s_t, RELU3_POS)
                 R = self.local_network.get_value(lstm_outpus, FC_V_POS)
             
             i = t-1

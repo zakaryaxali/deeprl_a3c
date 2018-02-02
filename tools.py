@@ -24,19 +24,20 @@ def conv_delta(out_data, weights, stride, in_data_size):
     Equation (20) in : 
     http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/
     """
-    ret = np.empty((in_data_size, in_data_size))
-    out_temp_size = int(weights.shape[0]/stride)
+    ret = np.zeros((in_data_size, in_data_size))
+    temp_size = int(weights.shape[0]/stride)
+    out_data_size = out_data.shape[0] 
     
     for row in range(in_data_size):
         for col in range(in_data_size):
             row_even = row % 2
             col_even = col % 2
-            i = math.ceil(row/stride)
-            j = math.ceil(col/stride)
-            for m in range(out_temp_size):
-                for n in range(out_temp_size):                                         
-                    if i-m >=0 and j-n >= 0 and i-m <= out_temp_size and j-n <= out_temp_size:
-                        ret[row, col] += out_data[i-m, j-n] * weights[row_even + stride * m, col_even + stride * n]
+            i_ = math.floor(row/stride)
+            j_ = math.floor(col/stride)
+            for m in range(temp_size):
+                for n in range(temp_size):                                         
+                    if i_-m >=0 and j_-n >= 0 and i_-m < out_data_size and j_-n < out_data_size:
+                        ret[row, col] += out_data[i_-m, j_-n] * weights[row_even + stride * m, col_even + stride * n]
     
     return ret
     
