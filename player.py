@@ -5,6 +5,8 @@ from network import NNetwork
 import numpy as np
 from constants import FC_PI_POS, RELU3_POS, SM_POS, FC_V_POS
 
+
+
 class ActorA3C():
     """
     Class used for one thread. 
@@ -71,20 +73,21 @@ class ActorA3C():
                 R = self.local_network.get_value(lstm_outpus, FC_V_POS)
             
             i = t-1
-            d_theta = 0
-            d_theta_v = 0
+            d_theta_w = []
+            d_theta_b = []
             while i >= 0:                
                 R = rewards[i] + self.gamma * R
-                
+                print(i)
                 # todo : compute and accmulate gradients   
                 loss_pi = self.local_network.get_loss_pi(R, values[i], pis[i])
                 loss_value = self.local_network.get_loss_value(R, values[i])
-                d_theta += self.local_network.backpropag_pi(loss_pi
-                                                            , intermediate_values[i])
-                d_theta_v += self.local_network.backpropag_value(loss_value
-                                                                 , intermediate_values[i])
+                self.local_network.backpropag_pi(loss_pi
+                                                 , intermediate_values[i])
+                self.local_network.backpropag_value(loss_value
+                                                    , intermediate_values[i])
                 i -= 1
-                
+            
+            d_theta_w , d_theta_b = self.local_network.get_all_diff_weights_bias()
             # todo : Perform Asynchronous update
                 
             

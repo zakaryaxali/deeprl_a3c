@@ -25,8 +25,11 @@ class ConvLayer:
                                      , high=d
                                      , size= output_channel)
         self.stride = stride
+        self.clear_weights_bias()
+        
+    def clear_weights_bias(self):
         self.db = np.zeros_like(self.bias)
-        self.dw = np.zeros_like(self.weights)   
+        self.dw = np.zeros_like(self.weights)
         
     def update_val(self, val):
         self.in_val = val
@@ -61,8 +64,8 @@ class ConvLayer:
                                       self.stride)
                 #dw[i, o] += conv2(self.in_val, residuals[o])
         
-        self.db = residuals.sum(axis=1).sum(axis=0)
-        self.dw = dw
+        self.db += residuals.sum(axis=1).sum(axis=0)
+        self.dw += dw
         
         # gradient_x
         gradient_x = np.zeros_like(self.in_val)
@@ -98,8 +101,7 @@ class FCLayer:
                                      , high=d
                                      , size=(output_num, 1))
         #self.bias = np.zeros((output_num, 1))
-        self.db = np.zeros_like(self.bias)
-        self.dw = np.zeros_like(self.weights)       
+        self.clear_weights_bias()
         
     
     def update_val(self, val):
@@ -110,13 +112,17 @@ class FCLayer:
         return np.dot(self.weights.T, input_data) + self.bias
     
     def backward(self, loss):
-        self.dw = np.dot(self.in_val, loss.T)
-        self.db = np.sum(loss) 
+        self.dw += np.dot(self.in_val, loss.T)
+        self.db += np.sum(loss) 
         residual_x = np.dot(self.weights, loss)
         return residual_x
     
     def get_diff_weights_bias(self):
         return self.dw, self.db
+    
+    def clear_weights_bias(self):
+        self.db = np.zeros_like(self.bias)
+        self.dw = np.zeros_like(self.weights)
 
 class FlattenLayer:
     def __init__(self):
@@ -135,7 +141,7 @@ class FlattenLayer:
         return residual.reshape(self.r, self.c, self.in_channel)
     
     def get_diff_weights_bias(self):
-        return None, None
+        pass
 
 
 class SoftmaxLayer:

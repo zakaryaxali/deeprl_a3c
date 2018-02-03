@@ -92,18 +92,16 @@ class NNetwork():
             layer = self.layers[layer_pos]            
             layer.update_val(values[layer_pos-1])
             out_data = layer.backward(out_data)
-            print(layer_pos)
-            layer_pos -= 1
-        return self.get_all_diff_weights_bias()
+            layer_pos -= 1        
     
     def get_all_diff_weights_bias(self):
         dw = []
         db = []
-        layer_pos = len(self.layers) - 1
+        layer_pos = len(self.layers)
         
         while layer_pos >=1:
             layer = self.layers[layer_pos]            
-            curt_dw_db, curt_db = layer.get_diff_weights_bias()
+            curt_dw_db = layer.get_diff_weights_bias()
             if not curt_dw_db is None:
                 dw.append(curt_dw_db[0])
                 db.append(curt_dw_db[1])
@@ -113,9 +111,15 @@ class NNetwork():
             
         return dw, db 
     
-    def backpropag_value():
+    def backpropag_value(self, loss, values):
         """
         Makes the backpropagation on the last value layer
         Returns the weigts difference of that layer
         """
-        pass
+        out_data = loss        
+        layer_pos = len(self.layers)
+                
+        layer = self.layers[layer_pos]            
+        layer.update_val(values[layer_pos-1])
+        layer.backward(out_data)
+         
