@@ -8,31 +8,46 @@ from tools import conv2, get_height_after_conv, rot180, padding, inv_conv2, conv
 # weight initialization based on muupan's code
 # https://github.com/muupan/async-rl/blob/master/a3c_ale.py
 class ConvLayer:
-    def __init__(self, input_channel, output_channel, kernel_size, stride):
+    def __init__(self, input_channel, output_channel, kernel_size, stride
+                 , is_weights_init=True):
         self.in_val = 0
-        d = 1.0 / np.sqrt(input_channel * kernel_size * kernel_size)
-        self.weights =np.random.uniform(low=-d
-                                       , high=d
-                                       , size=(input_channel
-                                               , output_channel
-                                               , kernel_size
-                                               , kernel_size))
-
-        #self.weights = np.random.randn(input_channel, output_channel, 
-        #                              kernel_size, kernel_size)
-        #self.bias = np.zeros((output_channel))
-        self.bias =np.random.uniform(low=-d
-                                     , high=d
-                                     , size= output_channel)
+        if is_weights_init:
+            d = 1.0 / np.sqrt(input_channel * kernel_size * kernel_size)
+            
+            self.weights =np.random.uniform(low=-d
+                                           , high=d
+                                           , size=(input_channel
+                                                   , output_channel
+                                                   , kernel_size
+                                                   , kernel_size))
+    
+            #self.weights = np.random.randn(input_channel, output_channel, 
+            #                              kernel_size, kernel_size)
+            #self.bias = np.zeros((output_channel))
+            self.bias =np.random.uniform(low=-d
+                                         , high=d
+                                         , size= output_channel)
+        else:
+            self.weights =np.empty([input_channel, output_channel, kernel_size
+                                                   , kernel_size])
+            self.bias =np.empty([output_channel])
+            
         self.stride = stride
         self.clear_weights_bias()
-        
+    
+    def get_shape_wb(self):
+        return self.weights.shape, self.bias.shape
+    
     def clear_weights_bias(self):
         self.db = np.zeros_like(self.bias)
         self.dw = np.zeros_like(self.weights)
         
     def update_val(self, val):
         self.in_val = val
+        
+    def update_weights_bias(self, weights, bias):
+        self.weights = weights
+        self.bias = bias
         
     def forward(self, input_data):
         self.in_val = input_data
@@ -87,23 +102,37 @@ class ConvLayer:
     
     def get_diff_weights_bias(self):
         return self.dw, self.db
+    
+    def get_weights_bias(self):
+        return self.weights, self.bias
         
         
 class FCLayer:
-    def __init__(self, input_num, output_num):
+    def __init__(self, input_num, output_num, is_weights_init=True):
         self.in_val = 0
-        d = 1.0 / np.sqrt(input_num)
-        self.weights =np.random.uniform(low=-d
-                                       , high=d
-                                       , size=(input_num, output_num))
-        #self.weights = np.random.randn(input_num, output_num)        
-        self.bias =np.random.uniform(low=-d
-                                     , high=d
-                                     , size=(output_num, 1))
+        if is_weights_init:
+            d = 1.0 / np.sqrt(input_num)
+            self.weights =np.random.uniform(low=-d
+                                           , high=d
+                                           , size=(input_num, output_num))
+            #self.weights = np.random.randn(input_num, output_num)        
+            self.bias =np.random.uniform(low=-d
+                                         , high=d
+                                         , size=(output_num, 1))
+        else:
+            self.weights =np.empty([input_num, output_num])
+            #self.weights = np.random.randn(input_num, output_num)        
+            self.bias =np.empty([output_num, 1])
         #self.bias = np.zeros((output_num, 1))
         self.clear_weights_bias()
-        
     
+    def get_shape_wb(self):
+        return self.weights.shape, self.bias.shape
+    
+    def update_weights_bias(self, weights, bias):
+        self.weights = weights
+        self.bias = bias
+        
     def update_val(self, val):
         self.in_val = val
         
@@ -123,10 +152,16 @@ class FCLayer:
     def clear_weights_bias(self):
         self.db = np.zeros_like(self.bias)
         self.dw = np.zeros_like(self.weights)
+    
+    def get_weights_bias(self):
+        return self.weights, self.bias
 
 class FlattenLayer:
     def __init__(self):
         self.in_val = 0
+        pass
+    
+    def get_shape_wb(self):
         pass
     
     def update_val(self, val):
@@ -141,6 +176,9 @@ class FlattenLayer:
         return residual.reshape(self.r, self.c, self.in_channel)
     
     def get_diff_weights_bias(self):
+        pass
+    
+    def get_weights_bias(self):
         pass
 
 
@@ -163,7 +201,13 @@ class SoftmaxLayer:
 
     def get_diff_weights_bias(self):
         pass
-
+    
+    def get_weights_bias(self):
+        pass
+    
+    def get_shape_wb(self):
+        pass
+    
 class ReLULayer:
     def __init__(self):
         self.in_val = 0
@@ -184,4 +228,10 @@ class ReLULayer:
         return gradient_x
     
     def get_diff_weights_bias(self):
+        pass
+    
+    def get_weights_bias(self):
+        pass
+    
+    def get_shape_wb(self):
         pass

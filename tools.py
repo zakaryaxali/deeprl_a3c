@@ -9,12 +9,48 @@ Useful functions
 
 
 
-
+"""
 def log_uniform(lo, hi, rate):
   log_lo = math.log(lo)
   log_hi = math.log(hi)
   v = log_lo * (1-rate) + log_hi * rate
   return math.exp(v)
+w = np.random.uniform(low=0, high=1, size=(100, 1))
+shapes= [(50,1), (5,2,5)]
+li = get_list_from_vect(w, shapes)
+print(li[1].shape)
+print(li[1][0][1][1], w[56])
+"""
+def get_vect_from_list(list_values):
+    """
+    Returns vector (N, 1) of a list containing matrixes 
+    """
+    vect_values = np.array([]).reshape(0,1)
+    for curt_mat in list_values:
+        temp_size = 1
+        
+        for curt_shape in range(len(curt_mat.shape)):
+            temp_size *= curt_mat.shape[curt_shape]
+        vect_values = np.concatenate((vect_values
+                                     , curt_mat.reshape(temp_size, 1))
+                                     , axis=0)
+    return vect_values
+
+def get_list_from_vect(vect_values, all_shapes):
+    """
+    Returns list containing matrixes from vector (N, 1)
+    """
+    list_values = []
+    temp_idx = 0
+    for curt_mat_shape in all_shapes:
+        temp_size = 1
+        for i in range(len(curt_mat_shape)):
+            temp_size *= curt_mat_shape[i]
+        
+        list_values.append(vect_values[temp_idx:temp_idx+temp_size].reshape(curt_mat_shape))
+        temp_idx += temp_size
+        
+    return list_values
 
 
 def conv_delta(out_data, weights, stride, in_data_size):

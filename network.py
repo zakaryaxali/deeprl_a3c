@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from tools import get_vect_from_list
 
 class NNetwork():
     """
@@ -95,21 +96,60 @@ class NNetwork():
             layer_pos -= 1        
     
     def get_all_diff_weights_bias(self):
-        dw = []
-        db = []
+        dw_b = []
         layer_pos = len(self.layers)
         
         while layer_pos >=1:
             layer = self.layers[layer_pos]            
             curt_dw_db = layer.get_diff_weights_bias()
             if not curt_dw_db is None:
-                dw.append(curt_dw_db[0])
-                db.append(curt_dw_db[1])
+                dw_b.append(curt_dw_db[0])
+                dw_b.append(curt_dw_db[1])
                 layer.clear_weights_bias()
                 
             layer_pos -= 1
-            
-        return dw, db 
+        
+        dw_b.reverse()
+        vec_diff_weights_bias = get_vect_from_list(dw_b)
+        return vec_diff_weights_bias 
+    
+    
+    def get_all_weights_bias(self):
+        w_b = []
+        
+        layer_pos = len(self.layers)
+        
+        while layer_pos >=1:
+            layer = self.layers[layer_pos]            
+            curt_w_b = layer.get_weights_bias()
+            if not curt_w_b is None:
+                w_b.append(curt_w_b[0])
+                w_b.append(curt_w_b[1])
+                layer.clear_weights_bias()
+                
+            layer_pos -= 1
+        
+        w_b.reverse()
+        vec_weights_bias = get_vect_from_list(w_b)
+        return vec_weights_bias 
+    
+    def get_all_shapes(self):
+        w_b_shapes = []
+        
+        layer_pos = len(self.layers)
+        
+        while layer_pos >=1:
+            layer = self.layers[layer_pos]            
+            curt_w_b = layer.get_shape_wb()
+            if not curt_w_b is None:
+                w_b_shapes.append(curt_w_b[0])
+                w_b_shapes.append(curt_w_b[1])
+                layer.clear_weights_bias()
+                
+            layer_pos -= 1
+        
+        w_b_shapes.reverse()        
+        return w_b_shapes 
     
     def backpropag_value(self, loss, values):
         """
@@ -117,8 +157,7 @@ class NNetwork():
         Returns the weigts difference of that layer
         """
         out_data = loss        
-        layer_pos = len(self.layers)
-                
+        layer_pos = len(self.layers)                
         layer = self.layers[layer_pos]            
         layer.update_val(values[layer_pos-1])
         layer.backward(out_data)
