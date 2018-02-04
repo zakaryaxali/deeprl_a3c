@@ -45,7 +45,7 @@ for p in train_threads:
 
 output_file = 'a3c_weights.pkl'
 parameters = {
-    'weights': sw
+    'weights': sw.shared_theta 
 }
 output = open(output_file, 'wb')
 pickle.dump(parameters, output)
