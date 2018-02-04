@@ -5,6 +5,7 @@
 Test File
 """
 import signal
+import pickle
 import constants 
 from async import SharedWeights
 import multiprocessing as mp
@@ -42,4 +43,12 @@ signal.pause()
 for p in train_threads:
     p.join()
 
+output_file = 'a3c_weights.pkl'
+parameters = {
+    'weights': sw
+}
+output = open(output_file, 'wb')
+pickle.dump(parameters, output)
+output.close()
+    
 print('finish')
