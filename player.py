@@ -24,7 +24,8 @@ class ActorA3C():
         A3C - pseudocode for each actor-learner thread
         The actor plays the Atari Game
         """        
-        while self.T<T_MAX:
+        while self.T<T_MAX and sw.stop_process.value==False:
+            print('thread '+ str(self.thread_index) + 'T: ' + str(self.T))            
             t = 0
             # done : Reset gradients : d_theta
             d_theta = None
@@ -93,7 +94,7 @@ class ActorA3C():
             d_theta = self.local_network.get_all_diff_weights_bias()
             sw.gradient_descent(d_theta)
             # done : Perform Asynchronous update
-                
+        print('thread '+ str(self.thread_index) + ' finished')
             
     def get_action_from_pi(self, prob_policies):
         """

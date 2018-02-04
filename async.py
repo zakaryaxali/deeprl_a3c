@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from multiprocessing.sharedctypes import Array
-from ctypes import c_double
+from multiprocessing.sharedctypes import Array, Value
+from ctypes import c_double, c_bool
 import numpy as np
 
 class SharedWeights:
@@ -12,6 +12,7 @@ class SharedWeights:
         self.learning_rate = learning_rate
         self.coef_theta = Array(c_double, (inital_theta).flat, lock=False) 
         self.shared_theta = np.frombuffer(self.coef_theta)
+        self.stop_process = Value(c_bool, False)
         
     def gradient_descent(self, d_theta):
         """
@@ -19,4 +20,4 @@ class SharedWeights:
         """
         # Loop : not optimal. Need to make Vect - vect
         for i in range(len(self.shared_theta)):
-            self.shared_theta[i] -= self.learning_rate * d_theta[i]        
+            self.shared_theta[i] -= self.learning_rate * d_theta[i]                    
