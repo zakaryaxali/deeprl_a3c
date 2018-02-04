@@ -11,6 +11,7 @@ class ConvLayer:
     def __init__(self, input_channel, output_channel, kernel_size, stride
                  , is_weights_init=True):
         self.in_val = 0
+        self.is_wb = True
         if is_weights_init:
             d = 1.0 / np.sqrt(input_channel * kernel_size * kernel_size)
             
@@ -77,6 +78,8 @@ class ConvLayer:
                 dw[i, o] += inv_conv2(self.in_val[:,:,i], 
                                       residuals[:,:,o], 
                                       self.stride)
+                if dw[i, o].any() < -3:
+                    print('test')
                 #dw[i, o] += conv2(self.in_val, residuals[o])
         
         self.db += residuals.sum(axis=1).sum(axis=0)
@@ -110,6 +113,7 @@ class ConvLayer:
 class FCLayer:
     def __init__(self, input_num, output_num, is_weights_init=True):
         self.in_val = 0
+        self.is_wb = True
         if is_weights_init:
             d = 1.0 / np.sqrt(input_num)
             self.weights =np.random.uniform(low=-d
@@ -159,6 +163,7 @@ class FCLayer:
 class FlattenLayer:
     def __init__(self):
         self.in_val = 0
+        self.is_wb = False
         pass
     
     def get_shape_wb(self):
@@ -185,6 +190,7 @@ class FlattenLayer:
 class SoftmaxLayer:
     def __init__(self):
         self.in_val = 0
+        self.is_wb = False
         pass
     
     def update_val(self, val):
@@ -211,6 +217,7 @@ class SoftmaxLayer:
 class ReLULayer:
     def __init__(self):
         self.in_val = 0
+        self.is_wb = False
         pass
     
     def update_val(self, val):

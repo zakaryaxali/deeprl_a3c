@@ -162,3 +162,17 @@ class NNetwork():
         layer.update_val(values[layer_pos-1])
         layer.backward(out_data)
          
+    def update_weights_bias(self, list_weights_bias):
+        """
+        Update Weights and Bias
+        """
+        layer_pos = 1
+        i=0
+        
+        while layer_pos <=len(self.layers):
+            layer = self.layers[layer_pos]   
+            if layer.is_wb:                
+                layer.update_weights_bias(list_weights_bias[i+1]
+                , list_weights_bias[i])
+                i += 2
+            layer_pos += 1   

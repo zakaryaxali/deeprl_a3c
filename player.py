@@ -5,7 +5,7 @@ from network import NNetwork
 import numpy as np
 import constants #import FC_PI_POS, RELU3_POS, SM_POS, FC_V_POS
 from layer import ConvLayer, FCLayer, FlattenLayer, ReLULayer, SoftmaxLayer
-from tools import get_vect_from_list
+from tools import get_list_from_vect
 
 class ActorA3C():
     """
@@ -26,13 +26,13 @@ class ActorA3C():
         """        
         while self.T<T_MAX:
             t = 0
-            # todo : Reset gradients : d_theta
+            # done : Reset gradients : d_theta
+            d_theta = None
             # todo : Synchronize thread-specific parameters 
-            weights_bias = get_vect_from_list(sw.shared_theta
+            weights_bias = get_list_from_vect(sw.shared_theta
                                                , self.local_network.get_all_shapes())
             self.local_network.update_weights_bias(weights_bias)
-            weights = None
-            bias = None
+            weights_bias = None
             # done : Get state s_t
             s_t = self.game_state.s_t
             states = []
@@ -78,11 +78,9 @@ class ActorA3C():
                 R = self.local_network.get_value(lstm_outpus, constants.FC_V_POS)
             
             i = t-1
-            d_theta_w = []
-            d_theta_b = []
             while i >= 0:                
                 R = rewards[i] + self.gamma * R
-                print(i)
+                print('thread '+ str(self.thread_index) + ' '+ str(i))
                 # todo : compute and accmulate gradients   
                 loss_pi = self.local_network.get_loss_pi(R, values[i], pis[i])
                 loss_value = self.local_network.get_loss_value(R, values[i])
@@ -117,23 +115,23 @@ def create_player_atari(thread_idx, is_theta=True):
                       output_channel=constants.CONV1_FILTERS, 
                       kernel_size=constants.CONV1_SIZE, 
                       stride=constants.CONV1_STRIDE, 
-                      is_theta)
+                      is_weights_init=is_theta)
     
     lay_conv2 = ConvLayer(input_channel=constants.CONV1_FILTERS, 
                           output_channel=constants.CONV2_FILTERS, 
                           kernel_size=constants.CONV2_SIZE, 
                           stride=constants.CONV2_STRIDE, 
-                          is_theta)
+                          is_weights_init=is_theta)
     
     lay_fc3 = FCLayer(constants.FC_LSTM_UNITS, constants.FC_LSTM_OUTPUTS
-                      , is_theta)
+                      , is_weights_init=is_theta)
     
     lay_fc4 = FCLayer(constants.FC_PI_UNITS, 
                       len(player.game_state.real_actions)
-                      ,is_theta)
+                      ,is_weights_init=is_theta)
     
     lay_fc5 = FCLayer(constants.FC_V_UNITS, constants.FC_V_OUTPUTS
-                      ,is_theta)
+                      ,is_weights_init=is_theta)
     
     player.local_network.add_layer(lay_conv1, constants.CONV1_POS)
     player.local_network.add_layer(ReLULayer(), constants.RELU1_POS)
