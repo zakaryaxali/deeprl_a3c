@@ -17,7 +17,6 @@ class SharedWeights:
     def gradient_descent(self, d_theta):
         """
         Updates the shared weights with gradients from a process
-        """
-        # Loop : not optimal. Need to make Vect - vect
+        """        
         for i in range(len(self.shared_theta)):
             self.shared_theta[i] -= self.learning_rate * d_theta[i]                    

@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from tools import conv2, get_height_after_conv, rot180, padding, inv_conv2, conv_delta
-#from torch import nn
-#class torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True)[source]
+from tools import conv2, get_height_after_conv, inv_conv2, conv_delta
 
-# weight initialization based on muupan's code
-# https://github.com/muupan/async-rl/blob/master/a3c_ale.py
-class ConvLayer:
+"""
+File inspired from 
+https://github.com/muupan/async-rl/blob/master/a3c_ale.py
+weights initialization based on muupan's code
+"""
+
+class ConvLayer:    
     def __init__(self, input_channel, output_channel, kernel_size, stride
                  , is_weights_init=True):
         self.in_val = 0
@@ -21,10 +23,6 @@ class ConvLayer:
                                                    , output_channel
                                                    , kernel_size
                                                    , kernel_size))
-    
-            #self.weights = np.random.randn(input_channel, output_channel, 
-            #                              kernel_size, kernel_size)
-            #self.bias = np.zeros((output_channel))
             self.bias =np.random.uniform(low=-d
                                          , high=d
                                          , size= output_channel)
@@ -37,6 +35,9 @@ class ConvLayer:
         self.clear_weights_bias()
     
     def get_shape_wb(self):
+        """
+        Returns weights and bias shapes at current layer
+        """
         return self.weights.shape, self.bias.shape
     
     def clear_weights_bias(self):
@@ -44,6 +45,10 @@ class ConvLayer:
         self.dw = np.zeros_like(self.weights)
         
     def update_val(self, val):
+        """
+        Updates the input values of the layer
+        Useful for backpropagation
+        """
         self.in_val = val
         
     def update_weights_bias(self, weights, bias):
@@ -65,11 +70,13 @@ class ConvLayer:
             self.top_val[:,:,o] += self.bias[o]
         return self.top_val
     
-        #return nn.conv2d(input_data,  self.weights, 
-        #                 strides = [1, self.stride, self.stride, 1], 
-        #                 padding='VALID' ) + self.bias
-    
     def backward(self, residuals):
+        """
+        Backpropagation step for this layer
+        Inspired from :
+        " http://www.jefkine.com/general/2016/09/05/
+        backpropagation-in-convolutional-neural-networks/ "
+        """
         in_channel, out_channel, kernel_size, a = self.weights.shape
         dw = np.zeros_like(self.weights)        
         
@@ -78,14 +85,9 @@ class ConvLayer:
                 dw[i, o] += inv_conv2(self.in_val[:,:,i], 
                                       residuals[:,:,o], 
                                       self.stride)
-                if dw[i, o].any() < -3:
-                    print('test')
-                #dw[i, o] += conv2(self.in_val, residuals[o])
-        
+
         self.db += residuals.sum(axis=1).sum(axis=0)
-        self.dw += dw
-        
-        # gradient_x
+        self.dw += dw        
         gradient_x = np.zeros_like(self.in_val)
         
         for i in range(in_channel):
@@ -94,12 +96,6 @@ class ConvLayer:
                                             , self.weights[i][o]
                                             , self.stride
                                             , self.in_val.shape[0])
-                #conv2(padding(residuals, kernel_size - 1), 
-                #          rot180(self.weights[i, o]))
-                        
-        # IMPORtANT !!!
-        # gradient_x /= self.batch_size
-        # update
         
         return gradient_x
     
@@ -118,16 +114,13 @@ class FCLayer:
             d = 1.0 / np.sqrt(input_num)
             self.weights =np.random.uniform(low=-d
                                            , high=d
-                                           , size=(input_num, output_num))
-            #self.weights = np.random.randn(input_num, output_num)        
+                                           , size=(input_num, output_num))  
             self.bias =np.random.uniform(low=-d
                                          , high=d
                                          , size=(output_num, 1))
         else:
-            self.weights =np.empty([input_num, output_num])
-            #self.weights = np.random.randn(input_num, output_num)        
+            self.weights =np.empty([input_num, output_num])      
             self.bias =np.empty([output_num, 1])
-        #self.bias = np.zeros((output_num, 1))
         self.clear_weights_bias()
     
     def get_shape_wb(self):
@@ -177,7 +170,6 @@ class FlattenLayer:
         return in_data.reshape(self.in_channel * self.r * self.c, 1)
 
     def backward(self, residual):
-        # return residual.reshape(self.in_channel, self.r, self.c)
         return residual.reshape(self.r, self.c, self.in_channel)
     
     def get_diff_weights_bias(self):

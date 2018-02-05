@@ -14,8 +14,18 @@ from player import create_player_atari
 all_players = []
 train_threads = []
 
-all_players.append(create_player_atari(0))
-vect_weights_bias= all_players[0].local_network.get_all_weights_bias()
+
+
+if constants.IS_WEIGHTS_FROM_FILE:    
+    all_players.append(create_player_atari(0,  False))
+    pkl_file = open(constants.INPUT_FILE, 'rb')
+    pkl = pickle.load(pkl_file)
+    vect_weights_bias = pkl["weights"]
+    pkl_file.close()
+    
+else:
+    all_players.append(create_player_atari(0))
+    vect_weights_bias = all_players[0].local_network.get_all_weights_bias()
 sw = SharedWeights(constants.LEARNING_RATE, vect_weights_bias)
 
 def signal_handler(signal, frame):  
@@ -43,11 +53,8 @@ signal.pause()
 for p in train_threads:
     p.join()
 
-output_file = 'a3c_weights.pkl'
-parameters = {
-    'weights': sw.shared_theta 
-}
-output = open(output_file, 'wb')
+parameters = {'weights': sw.shared_theta}
+output = open(constants.OUTPUT_FILE, 'wb')
 pickle.dump(parameters, output)
 output.close()
     

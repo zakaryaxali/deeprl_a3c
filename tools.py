@@ -7,20 +7,6 @@ import math
 Useful functions
 """
 
-
-
-"""
-def log_uniform(lo, hi, rate):
-  log_lo = math.log(lo)
-  log_hi = math.log(hi)
-  v = log_lo * (1-rate) + log_hi * rate
-  return math.exp(v)
-w = np.random.uniform(low=0, high=1, size=(100, 1))
-shapes= [(50,1), (5,2,5)]
-li = get_list_from_vect(w, shapes)
-print(li[1].shape)
-print(li[1][0][1][1], w[56])
-"""
 def get_vect_from_list(list_values):
     """
     Returns vector (N, 1) of a list containing matrixes 
@@ -56,7 +42,6 @@ def get_list_from_vect(vect_values, all_shapes):
 def conv_delta(out_data, weights, stride, in_data_size):
     """
     Computes gradient deltas in backpropagation for convolution layer
-    Could be optimized : too much loops !!
     Equation (20) in : 
     http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/
     """
@@ -96,9 +81,14 @@ def inv_conv2(in_data, out_data, stride):
     return ret
 
 
-# https://gist.githubusercontent.com/JiaxiangZheng/a60cc8fe1bf6e20c1a41abc98131d518/raw/3630ae57e2e6c5669868a173b763f00fc6ddfb76/CNN.py
+
 def conv2(X, k, stride):
-    # as a demo code, here we ignore the shape check
+    """
+    Convolution inspired from
+    " https://gist.githubusercontent.com/JiaxiangZheng/
+    a60cc8fe1bf6e20c1a41abc98131d518/raw/
+    3630ae57e2e6c5669868a173b763f00fc6ddfb76/CNN.py "
+    """
     x_row, x_col = X.shape
     k_row, k_col = k.shape
     
@@ -112,27 +102,14 @@ def conv2(X, k, stride):
     return ret
 
 def get_kernel(init_height, output_size, stride):
+    """
+    Returns kernel size for weights in convolutional layer
+    """
     return int(init_height-(output_size-1)*stride)
  
 def get_height_after_conv(init_height, filter_size, stride):
+    """
+    Returns height of outputs in convolutional layer
+    """
     return int(((init_height-filter_size)/stride+1))
 
-def rot180(in_data):
-    ret = in_data.copy()
-    yEnd = ret.shape[0] - 1
-    xEnd = ret.shape[1] - 1
-    for y in range(ret.shape[0] / 2):
-        for x in range(ret.shape[1]):
-            ret[yEnd - y][x] = ret[y][x]
-    for y in range(ret.shape[0]):
-        for x in range(ret.shape[1] / 2):
-            ret[y][xEnd - x] = ret[y][x]
-    return ret
-
-def padding(in_data, size):
-    cur_r, cur_w = in_data.shape[0], in_data.shape[1]
-    new_r = cur_r + size * 2
-    new_w = cur_w + size * 2
-    ret = np.zeros((new_r, new_w))
-    ret[size:cur_r + size, size:cur_w+size] = in_data
-    return ret

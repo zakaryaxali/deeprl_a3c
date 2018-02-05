@@ -27,8 +27,7 @@ class ALEGame(object):
         Get image from the game and reshape it
         """
         self.ale.getScreenGrayscale(self.screen)                
-        reshaped_screen = np.reshape(self.screen, (IMAGE_HEIGHT, IMAGE_WIDTH))
-        #x_t = resize(reshaped_screen, (110, 84))        
+        reshaped_screen = np.reshape(self.screen, (IMAGE_HEIGHT, IMAGE_WIDTH))    
         x_t = skimage.transform.resize(reshaped_screen
                                        , (110,84)
                                        , preserve_range=True)
@@ -45,7 +44,7 @@ class ALEGame(object):
     
     def reset(self):        
         """
-        Reset the game and create the first state
+        Resets the game and create the first state
         """
         self.ale.reset_game()
         self.act(0)
@@ -60,7 +59,7 @@ class ALEGame(object):
     
     def process_to_next_image(self, action):
         """
-        Act and get new state        
+        Acts and get new state        
         """
         real_action = self.real_actions[action]
         self.act(real_action)

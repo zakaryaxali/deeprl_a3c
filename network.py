@@ -19,12 +19,12 @@ class NNetwork():
     
     
     def add_layer(self, layer, position):
-        self.layers[position] = layer
-    
+        self.layers[position] = layer    
     
     def get_lstm(self, s_t, lstm_pos):
         """
         Returns lstm values
+        It is the layer of 256 neurons
         """
         out_data = s_t        
         for layer_pos in range(1, lstm_pos+1):
@@ -96,6 +96,10 @@ class NNetwork():
             layer_pos -= 1        
     
     def get_all_diff_weights_bias(self):
+        """
+        Return in a vect (N,1) all the gradients (weights and bias)
+        of the NeuralNet
+        """
         dw_b = []
         layer_pos = len(self.layers)
         
@@ -115,6 +119,9 @@ class NNetwork():
     
     
     def get_all_weights_bias(self):
+        """
+        Return in a vect (N,1) all the weights and bias of the NeuralNet
+        """
         w_b = []
         
         layer_pos = len(self.layers)
@@ -134,6 +141,9 @@ class NNetwork():
         return vec_weights_bias 
     
     def get_all_shapes(self):
+        """
+        Returns the shapes of all layer weights
+        """
         w_b_shapes = []
         
         layer_pos = len(self.layers)
