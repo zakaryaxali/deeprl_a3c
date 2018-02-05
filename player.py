@@ -63,7 +63,12 @@ class ActorA3C():
       
             if self.game_state.is_game_over:
                 R = 0.
-                self.episode_reward = 0
+                print('thread '
+                      + str(self.thread_index) 
+                      + ' finished a game. Reward: ' 
+                      + str(self.episode_reward))                
+                self.episode_reward = 0                
+                self.game_state.reset()
             else:
                 lstm_outpus = self.local_network.get_lstm(s_t, constants.RELU3_POS)
                 R = self.local_network.get_value(lstm_outpus, constants.FC_V_POS)
@@ -80,13 +85,53 @@ class ActorA3C():
                 i -= 1
             
             d_theta = self.local_network.get_all_diff_weights_bias()
-            sw.gradient_descent(d_theta)
-            print('thread '
-                  + str(self.thread_index) 
-                  + ' reward : ' 
-                  + str(self.episode_reward))
-        print('thread '+ str(self.thread_index) + ' finished')
+            sw.gradient_descent(d_theta)            
+        
+    def test_play(self, T_MAX, t_max, weights):
+        """
+        A3C - pseudocode for testing a game and getting scores        
+        """        
+        while self.T<T_MAX:                      
+            print('T:' + str(self.T)) 
+            t = 0            
+            weights_bias = get_list_from_vect(weights
+                                               , self.local_network.get_all_shapes())
+            self.local_network.update_weights_bias(weights_bias)
+            weights_bias = None
+            s_t = self.game_state.s_t
+            pis = []
+            rewards = []
+            values = []
+            intermediate_values = []
             
+            while t<t_max and self.game_state.is_game_over==False:
+                lstm_outpus = self.local_network.get_lstm(s_t, constants.RELU3_POS)
+                probas_pi = self.local_network.get_pi(lstm_outpus
+                                                      , constants.FC_PI_POS
+                                                      , constants.SM_POS)
+                action = self.get_action_from_pi(probas_pi) 
+                
+                self.game_state.process_to_next_image(action)
+                rewards.append(self.game_state.reward)    
+                self.episode_reward += self.game_state.reward
+                pis.append(probas_pi[action])
+                values.append(self.local_network.get_value(lstm_outpus
+                                                           , constants.FC_V_POS))
+                
+                self.game_state.update()
+                s_t = self.game_state.s_t
+                intermediate_values.append(
+                        self.local_network.get_intermediate_values())
+                
+                t += 1
+                self.T += 1 
+      
+            if self.game_state.is_game_over:
+                print('GameOver. Reward : ' + str(self.episode_reward))
+                self.episode_reward = 0                
+                self.game_state.reset()                     
+            
+        
     def get_action_from_pi(self, prob_policies):
         """
         Choose an action considering the probabilities of selecting one
